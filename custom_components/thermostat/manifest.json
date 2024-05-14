@@ -1,0 +1,11 @@
+{
+  "codeowners": ["@RiccardoDori"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/RiccardoDori/Homeassistant",
+  "domain": "thermostat",
+  "iot_class": "assumed_state",
+  "name": "Thermostat",
+  "requirements": [],
+  "version": "1.0.0"
+}
