@@ -1,0 +1,166 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Home
+  # Location required to calculate the time the sun rises and sets
+  latitude: !secret latitude_home
+  longitude: !secret longitude_home
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: !secret elevation_home
+  # metric for Metric, imperial for Imperial
+  unit_system: metric
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: Europe/Rome
+  # Customization file
+  customize: !include customize.yaml
+  customize_glob: !include customize_glob.yaml
+
+# Show links to resources in log and frontend
+# introduction:
+
+# Enables the frontend
+frontend:
+
+# Enables configuration UI
+config:
+
+http:
+  # Secrets are defined in the file secrets.yaml
+  # api_password: !secret http_password
+  # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
+  # base_url: example.duckdns.org:8123
+  ssl_certificate: /home/homeassistant/certs/fullchain.pem
+  ssl_key: /home/homeassistant/certs/privkey.pem
+  base_url: !secret my_base_url
+  ip_ban_enabled: true
+  login_attempts_threshold: 5
+  cors_allowed_origins:
+    - https://google.com
+
+# Checks for available updates
+# Note: This component will send some information about your system to
+# the developers to assist with development of Home Assistant.
+# For more information, please see:
+# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
+updater:
+  # Optional, allows Home Assistant developers to focus on popular components.
+  # include_used_components: true
+
+# Discover some devices automatically
+# discovery:
+
+# Allows you to issue voice commands from the frontend in enabled browsers
+# conversation:
+
+# Enables support for tracking state changes over time
+history:
+
+recorder:
+  purge_interval: 2
+  purge_keep_days: 30
+  db_url: sqlite:////home/homeassistant/home-assistant_v2.db
+
+# View all events in a logbook
+logbook:
+
+# Enables a the System Health integration provides an API to offer information on the system and its components.
+system_health:
+
+# Enables a map showing the location of tracked devices
+map:
+
+sun:
+
+weather:
+  - platform: openweathermap
+    api_key: !secret openweathermap_api_key
+
+# Text to speech
+#tts:
+#  - platform: google
+
+climate:
+  - platform: besmart
+    name: Besmart Thermostat
+    username: !secret besmart_user
+    password: !secret besmart_pwd
+    room: Soggiorno
+    scan_interval: 120
+
+binary_sensor:
+  - platform: template
+    sensors: # https://www.home-assistant.io/components/binary_sensor/
+      heating:
+        friendly_name: "Heating"
+        value_template: "{{ is_state('climate.besmart_thermostat', 'on') }}"
+      battery_state:
+        friendly_name: "battery state"
+        device_class: battery
+        value_template: "{{ state_attr('climate.besmart_thermostat', 'battery_state') == '1' }}"
+        icon_template: mdi:battery
+
+logger:
+  default: info
+
+  logs:
+    homeassistant.core: debug
+    asyncio: debug
+    custom_components.besmart.climate: debug
+    homeassistant.components.camera.generic: debug
+
+history_graph:
+  gr1:
+    name: Temperature
+    entities:
+      - binary_sensor.heating
+      - sensor.temperatura_giardino
+      - sensor.temperatura_cucina
+      - climate.besmart_thermostat
+#.attributes.current_temperature
+    hours_to_show: 1
+    refresh: 60
+
+mqtt:
+  password: !secret mqtt_password
+
+#duckdns:
+#  domain: !secret duckdns_domain
+#  access_token: !secret duckdns_token
+
+##########################
+# Includes
+##########################
+sensor: !include sensors.yaml
+switch: !include switches.yaml
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+zwave:
+  usb_path: /dev/zwave
+  network_key: !secret zwave_network_key
+
+# Example configuration.yaml entry
+camera:
+  - platform: generic
+    username: !secret camera_1_username
+    password: !secret camera_1_password
+    still_image_url: http://192.168.1.13/Streaming/Channels/1/picture
+    stream_source: rtsp://192.168.1.13/Streaming/Channels/101
+    verify_ssl: false
+
+google_assistant:
+  project_id: !secret google_assistant_project_id
+  api_key: !secret google_assistant_api_key
+  exposed_domains:
+    - switch
+    - light
+  entity_config:
+    group.all_automations:
+      expose: false
+
+utility_meter:
+  daily_energy:
+    source: sensor.total_power_usage
+    cycle: daily
+  monthly_energy:
+    source: sensor.total_power_usage
+    cycle: monthly
